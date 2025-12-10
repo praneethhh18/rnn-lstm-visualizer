@@ -1,8 +1,9 @@
+import io
+
 import streamlit as st
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(page_title="RNN & LSTM Hidden State Visualizer", layout="wide")
@@ -88,7 +89,7 @@ try:
         )
         st.write(f"Hidden state vector at time step {timestep}:")
         st.dataframe(
-            pd.DataFrame(memory[timestep - 1]).T,
+            memory[timestep - 1].reshape(1, -1),
             use_container_width=True
         )
 
@@ -101,7 +102,7 @@ try:
     with col3:
         st.write("Final Hidden State")
         st.dataframe(
-            pd.DataFrame(final_memory.squeeze(1)),
+            final_memory.squeeze(1),
             use_container_width=True
         )
 
@@ -109,7 +110,7 @@ try:
         with col4:
             st.write("Final Cell State (Long-Term Memory)")
             st.dataframe(
-                pd.DataFrame(cell_memory.squeeze(1)),
+                cell_memory.squeeze(1),
                 use_container_width=True
             )
 
@@ -117,11 +118,12 @@ try:
 
     # ---------------- FULL MEMORY TABLE ----------------
     st.subheader("Complete Hidden State Table Across All Time Steps")
-    df = pd.DataFrame(memory)
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(memory, use_container_width=True)
 
     # ---------------- DOWNLOAD OPTION ----------------
-    csv_data = df.to_csv(index=False).encode("utf-8")
+    csv_buffer = io.StringIO()
+    np.savetxt(csv_buffer, memory, delimiter=",", fmt="%.6f")
+    csv_data = csv_buffer.getvalue().encode("utf-8")
     st.download_button(
         label="Download Hidden States as CSV",
         data=csv_data,
